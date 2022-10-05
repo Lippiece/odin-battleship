@@ -1,0 +1,22 @@
+{
+  "name": "odin-battleship",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest --globals",
+    "testOnce": "vitest --globals --coverage"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@adipiscing/image-slider": "^1.2.6",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-c8": "^0.23.4",
+    "vitest": "^0.23.4"
+  }
+}
