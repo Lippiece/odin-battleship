@@ -10,9 +10,10 @@ const ShipMethods = {
       Object.create( Ship( length ) ),
   hit:
     ship =>
-      Object.create( ship, {
-        hitCount: { value: ship.hitCount + 1 },
-        isSunk  : { value: ship.hitCount + 1 === ship.length },
+      ( {
+        hitCount: ship.hitCount + 1,
+        isSunk  : ship.hitCount + 1 === ship.length,
+        ...ship,
       } ),
 };
 
