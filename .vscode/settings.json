@@ -1,4 +1,7 @@
 {
   "task.allowAutomaticTasks": "on",
+  "cSpell.words": [
+    "gameboard"
+  ],
   "testing.automaticallyOpenPeekView": "never"
 }

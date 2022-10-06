@@ -4,7 +4,7 @@ const Ship        = length =>
     isSunk  : false,
     length,
   } );
-const ShipMethods = {
+const shipMethods = {
   createShip:
     length =>
       Object.create( Ship( length ) ),
@@ -17,4 +17,4 @@ const ShipMethods = {
       } ),
 };
 
-export default ShipMethods;
+export default shipMethods;
