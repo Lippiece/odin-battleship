@@ -123,7 +123,7 @@ const registerHit
               : column ) ) ),
       };
 
-      return { ...result, ...registerHitAtShips( target )( result ) };
+      return { ...result, ...registerHitAtShips( target )( gameboard ) };
 
     };
 const registerHitAtShips
@@ -132,11 +132,11 @@ const registerHitAtShips
       ( {
 
         ships: gameboard.ships.map( ship =>
-          ( {
-            ...checkIfHit( target )( gameboard.board )
-              ? shipMethods.hit( ship )
-              : ship,
-          } ) ),
+          ( getFullShipCoordinates( ship.position.position )( ship.length )( ship.position.direction )
+            .some( ( [row, column] ) =>
+              row === target[ 0 ] && column === target[ 1 ] )
+            ? shipMethods.hit( ship )
+            : ship ) ),
 
       } );
 const checkIfHit

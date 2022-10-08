@@ -6,6 +6,7 @@ import shipMethods from "../src/ship";
 
 const sampleBoard    = gameboardMethods.createGameboard();
 const boardWithAShip = gameboardMethods.placeShip( [1, 1] )( 3 )( "horizontal" )( sampleBoard );
+const attack         = gameboardMethods.receiveAttack( [1, 1] )( boardWithAShip );
 
 describe( "gameboard", () => {
 
@@ -19,7 +20,7 @@ describe( "gameboard", () => {
 
 } );
 
-describe( "gameboard methods", () => {
+describe( "ship placement", () => {
 
   test( "should place a ship at specific coordinates", () => {
 
@@ -51,11 +52,20 @@ describe( "gameboard methods", () => {
 
   } );
 
+  test( "should not place a ship at illegal coordinates", () => {
+
+    const illegalShipPlacement = gameboardMethods.placeShip( [1, 1] )( 3 )( "vertical" )( sampleBoard );
+
+    expect.assertions( 1 );
+
+    expect( illegalShipPlacement.board )
+      .toContainEqual( ["_", "_", "_", "_", "_", "_", "_", "_"] );
+
+  } );
+
 } );
 
-describe( "ship methods on board", () => {
-
-  const attack = gameboardMethods.receiveAttack( [1, 1] )( boardWithAShip );
+describe( "hit logic", () => {
 
   test( "should receive a hit and return changed board", () => {
 
@@ -75,6 +85,25 @@ describe( "ship methods on board", () => {
 
   } );
 
+  test( "should sink a ship", () => {
+
+    const sunk = gameboardMethods.receiveAttack( [1, 3] )( gameboardMethods.receiveAttack( [1, 2] )( attack ) );
+    expect.assertions( 1 );
+
+    expect( sunk.ships )
+      .toContainEqual( {
+        hitCount: 3,
+        isSunk  : true,
+        length  : 3,
+        position: { direction: "horizontal", position: [1, 1] },
+      } );
+
+  } );
+
+} );
+
+describe( "miss logic", () => {
+
   test( "should record a missed shot", () => {
 
     const missed = gameboardMethods.receiveAttack( [0, 1] )( attack );
@@ -85,20 +114,26 @@ describe( "ship methods on board", () => {
 
   } );
 
-  test( "should sink a ship", () => {
+} );
+
+describe( "game end logic", () => {
+
+  test( "should return true if all ships are sunk", () => {
 
     const sunk = gameboardMethods.receiveAttack( [1, 3] )( gameboardMethods.receiveAttack( [1, 2] )( attack ) );
-    expect.assertions( 2 );
+    expect.assertions( 1 );
 
-    expect( sunk.board[ 1 ][ 1 ] )
-      .toHaveProperty( "isSunk", true );
-    expect( sunk.ships )
-      .toEqual( [{
-        hitCount: 2,
-        isSunk  : true,
-        length  : 3,
-        position: { direction: "horizontal", posX: 1, posY: 1 },
-      }] );
+    expect( gameboardMethods.isGameOver( sunk ) )
+      .toBe( true );
+
+  } );
+
+  test( "should return false if all ships are not sunk", () => {
+
+    expect.assertions( 1 );
+
+    expect( gameboardMethods.isGameOver( attack ) )
+      .toBe( false );
 
   } );
 
