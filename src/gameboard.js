@@ -1,4 +1,4 @@
-import shipMethods from "./ship";
+import shipMethods from "./ship.js";
 
 const Gameboard        = () =>
   Array( 8 )
@@ -11,40 +11,35 @@ const gameboardMethods = {
         board: Gameboard(),
         ships,
       } ),
+
+  // TODO: disallow illegal ship placements
   placeShip:
-      posX =>
-        posY =>
-          length =>
-            direction =>
+      position =>
+        length =>
+          direction =>
+            gameboard =>
               ( {
-                board: Gameboard()
-                  .map( ( row, rowIndex ) =>
-                    row.map( ( _, columnIndex ) => {
+                ...gameboard,
+                board: gameboard.board.map( ( row, rowIndex ) =>
+                  row.map( ( column, columnIndex ) => {
 
-                      if ( direction === "horizontal" ) {
+                    if ( getFullShipCoordinates( position )( length )( direction )
+                      .some( ( [row_, column_] ) =>
+                        row_ === rowIndex && column_ === columnIndex ) ) {
 
-                        if ( rowIndex === posX && columnIndex >= posY && columnIndex < posY + length ) {
+                      return shipMethods.createShip( length );
 
-                          return shipMethods.createShip( length );
+                    }
+                    return column;
 
-                        }
-
-                      } else if ( columnIndex === posY && rowIndex >= posX && rowIndex < posX + length ) {
-
-                        return shipMethods.createShip( length );
-
-                      }
-                      return columnIndex;
-
-                    } ) ),
+                  } ) ),
                 ships: [{
                   hitCount: 0,
                   isSunk  : false,
                   length,
                   position: {
                     direction,
-                    posX,
-                    posY,
+                    position,
                   },
                 }],
               } ),
@@ -52,12 +47,51 @@ const gameboardMethods = {
               target =>
                 gameboard =>
                   ( {
-                    ...registerHitOnBoard( target )( gameboard.board ),
-                    ...registerHitInShips( target )( gameboard.ships ),
+                    ...registerHit( target )( gameboard ),
                     ...registerMiss( target )( gameboard.board ),
                   } ),
 
 };
+const getFullShipCoordinates
+  = position =>
+    length =>
+      direction =>
+        ( direction === "horizontal"
+          ? Array( length )
+            .fill( position )
+            .map( ( position, index ) =>
+              [position[ 0 ], position[ 1 ] + index] )
+          : Array( length )
+            .fill( position )
+            .map( ( position, index ) =>
+              [position[ 0 ] + index, position[ 1 ]] ) );
+const checkPlacement
+  = target =>
+    length =>
+      direction =>
+        board =>
+          ( checkIfPlacementCollides( target )( length )( direction )( board )
+            ? checkIfPlacementFitsInBoard( target )( length )( direction )( board )
+            : false );
+const checkIfPlacementFitsInBoard
+  = target =>
+    length =>
+      direction =>
+        ( direction === "horizontal"
+          ? target[ 1 ] + length <= 8
+          : target[ 0 ] + length <= 8 );
+const checkIfPlacementCollides
+  = target =>
+    length =>
+      direction =>
+        board =>
+          ( direction === "horizontal"
+            ? board[ target[ 0 ] ].slice( target[ 1 ], target[ 1 ] + length )
+              .every( cell =>
+                cell === "_" )
+            : board.slice( target[ 0 ], target[ 0 ] + length )
+              .every( row =>
+                row[ target[ 1 ] ] === "_" ) );
 const registerMiss
   = target =>
     board =>
@@ -77,40 +111,36 @@ const registerMiss
           } ) ),
       }
       );
-const registerHitOnBoard
+const registerHit
+  = target =>
+    gameboard => {
+
+      const result = {
+        board: gameboard.board.map( ( row, _ ) =>
+          row.map( ( column, __ ) =>
+            ( checkIfHit( target )( gameboard.board )
+              ? shipMethods.hit( column )
+              : column ) ) ),
+      };
+
+      return { ...result, ...registerHitAtShips( target )( result ) };
+
+    };
+const registerHitAtShips
+  = target =>
+    gameboard =>
+      ( {
+
+        ships: gameboard.ships.map( ship =>
+          ( {
+            ...checkIfHit( target )( gameboard.board )
+              ? shipMethods.hit( ship )
+              : ship,
+          } ) ),
+
+      } );
+const checkIfHit
   = target =>
     board =>
-      ( {
-        board: board.map( ( row, rowIndex ) =>
-          row.map( ( column, columnIndex ) => {
-
-            if ( rowIndex === target[ 0 ]
-              && columnIndex === target[ 1 ]
-              && !!column.hitCount ) {
-
-              return shipMethods.hit( column );
-
-            }
-            return column;
-
-          } ) ),
-      } );
-const registerHitInShips
-  = target =>
-    ships =>
-      ( {
-
-        ships: ships.map( ship =>
-          ( {
-            ...ship,
-            hitCount: ship.position.direction === "horizontal"
-              ? ( ship.position.posX === target[ 0 ] && ship.position.posY <= target[ 1 ] && ship.position.posY + ship.length > target[ 1 ]
-                ? ship.hitCount + 1
-                : ship.hitCount )
-              : ( ship.position.posY === target[ 1 ] && ship.position.posX <= target[ 0 ] && ship.position.posX + ship.length > target[ 0 ]
-                ? ship.hitCount + 1
-                : ship.hitCount ),
-          } ) ),
-
-      } );
+      board[ target[ 0 ] ][ target[ 1 ] ].hitCount;
 export default gameboardMethods;

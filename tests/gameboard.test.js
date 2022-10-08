@@ -4,14 +4,15 @@ import { describe, expect, test } from "vitest";
 import gameboardMethods from "../src/gameboard";
 import shipMethods from "../src/ship";
 
-const boardWithAShip = gameboardMethods.placeShip( 1 )( 1 )( 3 )( "horizontal" );
+const sampleBoard    = gameboardMethods.createGameboard();
+const boardWithAShip = gameboardMethods.placeShip( [1, 1] )( 3 )( "horizontal" )( sampleBoard );
 
 describe( "gameboard", () => {
 
   test( "should return empty board", () => {
 
     expect.assertions( 1 );
-    expect( gameboardMethods.createGameboard().board )
+    expect( sampleBoard.board )
       .toContainEqual( ["_", "_", "_", "_", "_", "_", "_", "_"] );
 
   } );
@@ -40,7 +41,7 @@ describe( "gameboard methods", () => {
           hitCount: 0,
           isSunk  : false,
           length  : 3,
-          position: { direction: "horizontal", posX: 1, posY: 1 },
+          position: { direction: "horizontal", position: [1, 1] },
         },
       ] );
     expect( boardWithAShip.board[ 1 ][ 1 ] )
@@ -56,7 +57,7 @@ describe( "ship methods on board", () => {
 
   const attack = gameboardMethods.receiveAttack( [1, 1] )( boardWithAShip );
 
-  test( "should hit a ship and return changed board", () => {
+  test( "should receive a hit and return changed board", () => {
 
     expect.assertions( 2 );
 
@@ -65,7 +66,7 @@ describe( "ship methods on board", () => {
         hitCount: 1,
         isSunk  : false,
         length  : 3,
-        position: { direction: "horizontal", posX: 1, posY: 1 },
+        position: { direction: "horizontal", position: [1, 1] },
       }] );
     expect(
       attack.board[ 1 ][ 1 ]
@@ -74,13 +75,30 @@ describe( "ship methods on board", () => {
 
   } );
 
-  test( "should should record a missed shot", () => {
+  test( "should record a missed shot", () => {
 
     const missed = gameboardMethods.receiveAttack( [0, 1] )( attack );
     expect.assertions( 1 );
 
     expect( missed.board[ 0 ][ 1 ] )
       .toBe( "X" );
+
+  } );
+
+  test( "should sink a ship", () => {
+
+    const sunk = gameboardMethods.receiveAttack( [1, 3] )( gameboardMethods.receiveAttack( [1, 2] )( attack ) );
+    expect.assertions( 2 );
+
+    expect( sunk.board[ 1 ][ 1 ] )
+      .toHaveProperty( "isSunk", true );
+    expect( sunk.ships )
+      .toEqual( [{
+        hitCount: 2,
+        isSunk  : true,
+        length  : 3,
+        position: { direction: "horizontal", posX: 1, posY: 1 },
+      }] );
 
   } );
 
