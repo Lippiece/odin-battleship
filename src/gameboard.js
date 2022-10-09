@@ -12,28 +12,35 @@ const gameboardMethods = {
         ships,
       } ),
 
-  // TODO: disallow illegal ship placements
+  isGameOver:
+    gameboard =>
+      ( gameboard.ships.every( ship =>
+        ship.isSunk ) ),
+
+  // TODO: Disallow placing ships side by side.
   placeShip:
-      position =>
-        length =>
-          direction =>
-            gameboard =>
-              ( {
-                ...gameboard,
-                board: gameboard.board.map( ( row, rowIndex ) =>
-                  row.map( ( column, columnIndex ) => {
+    position =>
+      length =>
+        direction =>
+          gameboard =>
+            ( {
+              ...gameboard,
+              board: gameboard.board.map( ( row, rowIndex ) =>
+                row.map( ( column, columnIndex ) => {
 
-                    if ( getFullShipCoordinates( position )( length )( direction )
-                      .some( ( [row_, column_] ) =>
-                        row_ === rowIndex && column_ === columnIndex ) ) {
+                  if ( getFullShipCoordinates( position )( length )( direction )
+                    .some( ( [row_, column_] ) =>
+                      row_ === rowIndex && column_ === columnIndex )
+                         && ifLegalPlacement( position )( length )( direction )( gameboard.board ) ) {
 
-                      return shipMethods.createShip( length );
+                    return shipMethods.createShip( length );
 
-                    }
-                    return column;
+                  }
+                  return column;
 
-                  } ) ),
-                ships: [{
+                } ) ),
+              ships: [
+                ...gameboard.ships, {
                   hitCount: 0,
                   isSunk  : false,
                   length,
@@ -42,15 +49,14 @@ const gameboardMethods = {
                     position,
                   },
                 }],
-              } ),
+            } ),
   receiveAttack:
-              target =>
-                gameboard =>
-                  ( {
-                    ...registerHit( target )( gameboard ),
-                    ...registerMiss( target )( gameboard.board ),
-                  } ),
-
+    target =>
+      gameboard =>
+        ( {
+          ...registerHit( target )( gameboard ),
+          ...registerMiss( target )( gameboard.board ),
+        } ),
 };
 const getFullShipCoordinates
   = position =>
@@ -59,21 +65,24 @@ const getFullShipCoordinates
         ( direction === "horizontal"
           ? Array( length )
             .fill( position )
-            .map( ( position, index ) =>
-              [position[ 0 ], position[ 1 ] + index] )
+            .map( ( position_, index ) =>
+              [position_[ 0 ], position_[ 1 ] + index] )
           : Array( length )
             .fill( position )
-            .map( ( position, index ) =>
-              [position[ 0 ] + index, position[ 1 ]] ) );
-const checkPlacement
+            .map( ( position_, index ) =>
+              [position_[ 0 ] + index, position_[ 1 ]] ) );
+const ifLegalPlacement
   = target =>
     length =>
       direction =>
         board =>
-          ( checkIfPlacementCollides( target )( length )( direction )( board )
-            ? checkIfPlacementFitsInBoard( target )( length )( direction )( board )
-            : false );
-const checkIfPlacementFitsInBoard
+          ( checkIfPlacementFits( target )( length )( direction )
+            && checkIfPlacementCollides( target )( length )( direction )( board ) );
+/**
+ * Returns true if the placement fits in the board, and
+ * false if it doesn't.
+ */
+const checkIfPlacementFits
   = target =>
     length =>
       direction =>

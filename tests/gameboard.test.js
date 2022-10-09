@@ -54,12 +54,36 @@ describe( "ship placement", () => {
 
   test( "should not place a ship at illegal coordinates", () => {
 
-    const illegalShipPlacement = gameboardMethods.placeShip( [1, 1] )( 3 )( "vertical" )( sampleBoard );
+    const illegalShipPlacement = gameboardMethods.placeShip( [7, 7] )( 3 )( "vertical" )( sampleBoard );
 
     expect.assertions( 1 );
 
-    expect( illegalShipPlacement.board )
-      .toContainEqual( ["_", "_", "_", "_", "_", "_", "_", "_"] );
+    expect( illegalShipPlacement.board[ 7 ][ 7 ] )
+      .toEqual( "_" );
+
+  } );
+
+  test( "should not place a ship on top of another ship", () => {
+
+    const illegalShipPlacement = gameboardMethods.placeShip( [0, 1] )( 3 )( "vertical" )( boardWithAShip );
+
+    expect.assertions( 1 );
+
+    expect( illegalShipPlacement.board[ 2 ][ 1 ] )
+      .toEqual( "_" );
+
+  } );
+
+  test( "should place multiple ships", () => {
+
+    const boardWithTwoShips = gameboardMethods.placeShip( [4, 4] )( 4 )( "horizontal" )( boardWithAShip );
+
+    expect.assertions( 2 );
+
+    expect( boardWithTwoShips.ships.length )
+      .toEqual( 2 );
+    expect( boardWithTwoShips.board[ 4 ][ 4 ] )
+      .toHaveProperty( "isSunk", false );
 
   } );
 
