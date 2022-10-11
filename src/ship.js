@@ -7,7 +7,7 @@ const Ship        = length =>
 const shipMethods = {
   createShip:
     length =>
-      Object.create( Ship( length ) ),
+      Ship( length ),
   hit:
     ship =>
       ( {
