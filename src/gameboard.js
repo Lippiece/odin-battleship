@@ -1,3 +1,4 @@
+
 import shipMethods from "./ship.js";
 
 const Gameboard        = () =>
@@ -11,13 +12,10 @@ const gameboardMethods = {
         board: Gameboard(),
         ships,
       } ),
-
   isGameOver:
     gameboard =>
       ( gameboard.ships.every( ship =>
         ship.isSunk ) ),
-
-  // TODO: Disallow placing ships side by side.
   placeShip:
     position =>
       length =>
@@ -26,19 +24,13 @@ const gameboardMethods = {
             ( {
               ...gameboard,
               board: gameboard.board.map( ( row, rowIndex ) =>
-                row.map( ( column, columnIndex ) => {
-
-                  if ( getFullShipCoordinates( position )( length )( direction )
+                row.map( ( column, columnIndex ) =>
+                  ( getFullShipCoordinates( position )( length )( direction )
                     .some( ( [row_, column_] ) =>
                       row_ === rowIndex && column_ === columnIndex )
-                         && ifLegalPlacement( position )( length )( direction )( gameboard.board ) ) {
-
-                    return shipMethods.createShip( length );
-
-                  }
-                  return column;
-
-                } ) ),
+                           && ifLegalPlacement( position )( length )( direction )( gameboard.board )
+                    ? shipMethods.createShip( length )
+                    : column ) ) ),
               ships: [
                 ...gameboard.ships, {
                   hitCount: 0,
@@ -95,12 +87,51 @@ const checkIfPlacementCollides
       direction =>
         board =>
           ( direction === "horizontal"
-            ? board[ target[ 0 ] ].slice( target[ 1 ], target[ 1 ] + length )
+            ? getAdjacentCells( target )( length )( direction )( board )
               .every( cell =>
-                cell === "_" )
+                typeof cell !== "object" )
             : board.slice( target[ 0 ], target[ 0 ] + length )
               .every( row =>
                 row[ target[ 1 ] ] === "_" ) );
+// calculate adjacent cells considering rims of the board
+const getAdjacentCells
+  = target =>
+    length =>
+      direction =>
+        board => {
+
+          if ( direction === "horizontal" ) {
+
+            if ( target[ 0 ] === 0 ) {
+
+              return board[ target[ 0 ] ].slice( target[ 1 ] - 1, target[ 1 ] + length + 1 );
+
+            } if ( target[ 0 ] === 7 ) {
+
+              return board[ target[ 0 ] ].slice( target[ 1 ] - 1, target[ 1 ] + length + 1 );
+
+            }
+            return [...board[ target[ 0 ] ].slice( target[ 1 ] - 1, target[ 1 ] + length + 1 ),
+              ...board[ target[ 0 ] - 1 ].slice( target[ 1 ] - 1, target[ 1 ] + length + 1 ),
+              ...board[ target[ 0 ] + 1 ].slice( target[ 1 ] - 1, target[ 1 ] + length + 1 )];
+
+          }
+
+          // vertical
+          if ( target[ 1 ] === 0 ) {
+
+            return board.slice( target[ 0 ], target[ 0 ] + length );
+
+          } if ( target[ 1 ] === 7 ) {
+
+            return board.slice( target[ 0 ], target[ 0 ] + length );
+
+          }
+          return [...board.slice( target[ 0 ], target[ 0 ] + length ),
+            ...board.slice( target[ 0 ] - 1, target[ 0 ] + length - 1 ),
+            ...board.slice( target[ 0 ] + 1, target[ 0 ] + length + 1 )];
+
+        };
 const registerMiss
   = target =>
     board =>

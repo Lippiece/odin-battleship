@@ -20,6 +20,7 @@ describe( "gameboard", () => {
 
 } );
 
+// eslint-disable-next-line max-lines-per-function
 describe( "ship placement", () => {
 
   test( "should place a ship at specific coordinates", () => {
@@ -74,6 +75,17 @@ describe( "ship placement", () => {
 
   } );
 
+  test( "should not place ship next to another ship", () => {
+
+    const illegalShipPlacement = gameboardMethods.placeShip( [2, 1] )( 3 )( "horizontal" )( boardWithAShip );
+
+    expect.assertions( 1 );
+
+    expect( illegalShipPlacement.board[ 2 ][ 1 ] )
+      .toEqual( "_" );
+
+  } );
+
   test( "should place multiple ships", () => {
 
     const boardWithTwoShips = gameboardMethods.placeShip( [4, 4] )( 4 )( "horizontal" )( boardWithAShip );
@@ -84,6 +96,17 @@ describe( "ship placement", () => {
       .toEqual( 2 );
     expect( boardWithTwoShips.board[ 4 ][ 4 ] )
       .toHaveProperty( "isSunk", false );
+
+  } );
+
+  test( "should place a ship on the rim of the board", () => {
+
+    const boardWithShipOnRim = gameboardMethods.placeShip( [0, 0] )( 3 )( "horizontal" )( sampleBoard );
+
+    expect.assertions( 1 );
+
+    expect( boardWithShipOnRim.board[ 0 ][ 0 ] )
+      .toHaveProperty( "length", 3 );
 
   } );
 

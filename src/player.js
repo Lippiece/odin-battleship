@@ -7,7 +7,7 @@ const playerMethods = {
       receiver =>
         coordinates =>
           ( {
-            line: attacker,
+            next: attacker,
             turn: {
               ...receiver,
               gameboard: gameboardMethods.receiveAttack( coordinates )( receiver.gameboard ),

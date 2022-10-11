@@ -3,5 +3,6 @@
   "cSpell.words": [
     "gameboard"
   ],
-  "testing.automaticallyOpenPeekView": "never"
+  "testing.automaticallyOpenPeekView": "never",
+  "todo-tree.tree.scanMode": "open files"
 }
