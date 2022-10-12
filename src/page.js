@@ -1,4 +1,4 @@
-/* eslint-disable fp/no-unused-expression,fp/no-mutation */
+/* eslint-disable fp/no-unused-expression,fp/no-mutation,fp/no-nil */
 
 /* create 2 players
    place ships
@@ -27,8 +27,8 @@ const gameStyle      = css`
   align-items: center;
   justify-content: center;
   gap: 1em;
-  height: 70vh;
-  width: 70vh;
+  height: 90vh;
+  width: 90vh;
   background-color: #222;
 `;
 const gameboardStyle = css`
@@ -36,8 +36,8 @@ const gameboardStyle = css`
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
   grid-gap: 1px;
-  width: 100%;
-  height: 100%;
+  width: 40vh;
+  height: 40vh;
   background-color: #222;
   `;
 const cellStyle      = css`
@@ -78,7 +78,35 @@ const handleTurn
           player2: gameboardMethods.receiveAttack( attack )( game_.player2 ),
           turn   : game_.turn + 1,
         } );
-const render       = game => {
+const renderPlayer
+  = player =>
+    playerBoardElement =>
+      game_ =>
+        player.gameboard.board.map( ( row, rowIndex ) =>
+          row.map( ( column, columnIndex ) =>
+            playerBoardElement.append( ( () => {
+
+              const cellElement = document.createElement( "div" );
+              cellElement.classList.add( cellStyle );
+              cellElement.dataset.row    = rowIndex;
+              cellElement.dataset.column = columnIndex;
+              column === "_"
+                ? cellElement.dataset.cell = "_"
+                : ( column.isSunk
+                  ? cellElement.dataset.cell = "sunk"
+                  : cellElement.dataset.cell = column.length );
+              console.log( column );
+              cellElement.addEventListener( "click", () => {
+
+                document.querySelector( "body" )
+                  .replaceChildren();
+                render( handleTurn( game_ )( [rowIndex, columnIndex] ) );
+
+              } );
+              return cellElement;
+
+            } )() ) ) );
+const render = game_ => {
 
   const gameElement = document.createElement( "div" );
   gameElement.classList.add( gameStyle );
@@ -87,54 +115,8 @@ const render       = game => {
   const player2BoardElement = document.createElement( "div" );
   player2BoardElement.classList.add( gameboardStyle );
 
-  game.player1.gameboard.board.map( ( row, rowIndex ) =>
-    row.map( ( column, columnIndex ) =>
-      player1BoardElement.append( ( () => {
-
-        const cellElement = document.createElement( "div" );
-        cellElement.classList.add( cellStyle );
-        cellElement.dataset.row    = rowIndex;
-        cellElement.dataset.column = columnIndex;
-        column === "_"
-          ? cellElement.dataset.cell = "_"
-          : ( column.isSunk
-            ? cellElement.dataset.cell = "sunk"
-            : cellElement.dataset.cell = column.length );
-        cellElement.addEventListener( "click", () => {
-
-          document.querySelector( "body" )
-            .replaceChildren();
-          render( handleTurn( game )( [rowIndex, columnIndex] ) );
-
-        } );
-        return cellElement;
-
-      } )() ) ) );
-
-  game.player2.gameboard.board.map( ( row, rowIndex ) =>
-    row.map( ( column, columnIndex ) =>
-      player2BoardElement.append( ( () => {
-
-        const cellElement = document.createElement( "div" );
-        cellElement.classList.add( cellStyle );
-        cellElement.dataset.row    = rowIndex;
-        cellElement.dataset.column = columnIndex;
-        column === "_"
-          ? cellElement.dataset.cell = "_"
-          : ( column.isSunk
-            ? cellElement.dataset.cell = "sunk"
-            : cellElement.dataset.cell = column.length );
-        console.log( column );
-        cellElement.addEventListener( "click", () => {
-
-          document.querySelector( "body" )
-            .replaceChildren();
-          render( handleTurn( game )( [rowIndex, columnIndex] ) );
-
-        } );
-        return cellElement;
-
-      } )() ) ) );
+  renderPlayer( game_.player1 )( player1BoardElement )( game_ );
+  renderPlayer( game_.player2 )( player2BoardElement )( game_ );
 
   gameElement.append( player1BoardElement );
   gameElement.append( player2BoardElement );
