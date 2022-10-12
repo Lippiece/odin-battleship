@@ -128,20 +128,20 @@ describe( "hit logic", () => {
     expect(
       attack.board[ 1 ][ 1 ]
     )
-      .toHaveProperty( "isSunk", false );
+      .toBe( "H" );
 
   } );
 
   test( "should sink a ship", () => {
 
-    const sunk = gameboardMethods.receiveAttack( [1, 3] )( gameboardMethods.receiveAttack( [1, 2] )( attack ) );
+    const boardWithAShip = gameboardMethods.placeShip( [1, 1] )( 1 )( "horizontal" )( sampleBoard );
+    const sunk           = gameboardMethods.receiveAttack( [1, 1] )( boardWithAShip );
     expect.assertions( 1 );
-
     expect( sunk.ships )
       .toContainEqual( {
-        hitCount: 3,
+        hitCount: 1,
         isSunk  : true,
-        length  : 3,
+        length  : 1,
         position: { direction: "horizontal", position: [1, 1] },
       } );
 

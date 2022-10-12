@@ -32,7 +32,7 @@ describe( "player actions", () => {
     expect.assertions( 2 );
 
     expect( attack )
-      .toHaveProperty( "line", player1 );
+      .toHaveProperty( "next", player1 );
     expect( attack.turn.gameboard.board[ 1 ][ 1 ] )
       .toBe( "X" );
 

@@ -47,6 +47,9 @@ const cellStyle      = css`
     &[data-cell="5"] {
       background-color: navy;
     }
+    &[data-cell="X"] {
+      background-color: #aaa;
+    }
     & {
       background-color: #555;
       border: 1px solid #000;
@@ -70,13 +73,19 @@ const handleTurn
       ( game_.turn % 2 === 0
         ? {
           ...game_,
-          player1: gameboardMethods.receiveAttack( attack )( game_.player1 ),
-          turn   : game_.turn + 1,
+          player1: {
+            ...game_.player1,
+            gameboard: gameboardMethods.receiveAttack( attack )( game_.player1.gameboard ),
+          },
+          turn: game_.turn + 1,
         }
         : {
           ...game_,
-          player2: gameboardMethods.receiveAttack( attack )( game_.player2 ),
-          turn   : game_.turn + 1,
+          player2: {
+            ...game_.player2,
+            gameboard: gameboardMethods.receiveAttack( attack )( game_.player2.gameboard ),
+          },
+          turn: game_.turn + 1,
         } );
 const renderPlayer
   = player =>
@@ -90,17 +99,23 @@ const renderPlayer
               cellElement.classList.add( cellStyle );
               cellElement.dataset.row    = rowIndex;
               cellElement.dataset.column = columnIndex;
-              column === "_"
-                ? cellElement.dataset.cell = "_"
-                : ( column.isSunk
-                  ? cellElement.dataset.cell = "sunk"
-                  : cellElement.dataset.cell = column.length );
-              console.log( column );
+              const cell                 = {
+                X: () =>
+                  cellElement.dataset.cell = "X",
+                _: () =>
+                  cellElement.dataset.cell = "_",
+                ship: () =>
+                  ( column.isSunk
+                    ? cellElement.dataset.cell = "sunk"
+                    : cellElement.dataset.cell = column.length ),
+              };
+              ( cell[ column ] || cell.ship )();
               cellElement.addEventListener( "click", () => {
 
                 document.querySelector( "body" )
                   .replaceChildren();
                 render( handleTurn( game_ )( [rowIndex, columnIndex] ) );
+                console.log( column );
 
               } );
               return cellElement;

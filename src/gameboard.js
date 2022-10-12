@@ -93,6 +93,7 @@ const checkIfPlacementCollides
             : board.slice( target[ 0 ], target[ 0 ] + length )
               .every( row =>
                 row[ target[ 1 ] ] === "_" ) );
+
 // calculate adjacent cells considering rims of the board
 const getAdjacentCells
   = target =>
@@ -137,33 +138,25 @@ const registerMiss
     board =>
       ( {
         board: board.map( ( row, rowIndex ) =>
-          row.map( ( column, columnIndex ) => {
-
-            if ( rowIndex === target[ 0 ]
-              && columnIndex === target[ 1 ]
-              && ( typeof column !== "object" ) ) {
-
-              return "X";
-
-            }
-            return column;
-
-          } ) ),
-      }
-      );
+          row.map( ( column, columnIndex ) =>
+            ( rowIndex === target[ 0 ]
+            && columnIndex === target[ 1 ]
+              ? ( typeof column === "object" ? "H" : "X" )
+              : column ) ) ),
+      } );
 const registerHit
   = target =>
     gameboard => {
 
-      const result = {
-        board: gameboard.board.map( ( row, _ ) =>
-          row.map( ( column, __ ) =>
-            ( checkIfHit( target )( gameboard.board )
-              ? shipMethods.hit( column )
-              : column ) ) ),
-      };
+      if ( typeof gameboard.board[ target[ 0 ] ][ target[ 1 ] ] !== "object" ) {
 
-      return { ...result, ...registerHitAtShips( target )( gameboard ) };
+        return gameboard;
+
+      }
+      return ( {
+        ...gameboard,
+        ...registerHitAtShips( target )( gameboard ),
+      } );
 
     };
 const registerHitAtShips
@@ -179,8 +172,10 @@ const registerHitAtShips
             : ship ) ),
 
       } );
+/**
+ * If the column is an object, then it's a hit.
+ */
 const checkIfHit
-  = target =>
-    board =>
-      board[ target[ 0 ] ][ target[ 1 ] ].hitCount;
+  = column =>
+    typeof column === "object";
 export default gameboardMethods;

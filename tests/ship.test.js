@@ -37,11 +37,11 @@ describe( "ship methods", () => {
 
     expect.assertions( 2 );
     const ship = ShipMethods.createShip( 4 );
-
-    expect( ShipMethods.hit( ship ).hitCount )
+    const hit  = ShipMethods.hit( ship );
+    expect( hit.hitCount )
       .toBe( 1 );
 
-    expect( ShipMethods.hit( ship ) )
+    expect( hit )
       .toHaveProperty( "isSunk", false );
 
   } );
@@ -50,8 +50,8 @@ describe( "ship methods", () => {
 
     expect.assertions( 1 );
     const ship = ShipMethods.createShip( 1 );
-
-    expect( ShipMethods.hit( ship ) )
+    const hit  = ShipMethods.hit( ship );
+    expect( hit )
       .toHaveProperty( "isSunk", true );
 
   } );
