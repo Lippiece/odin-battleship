@@ -57,10 +57,12 @@ describe( "ship placement", () => {
 
     const illegalShipPlacement = gameboardMethods.placeShip( [7, 7] )( 3 )( "vertical" )( sampleBoard );
 
-    expect.assertions( 1 );
+    expect.assertions( 2 );
 
     expect( illegalShipPlacement.board[ 7 ][ 7 ] )
       .toEqual( "_" );
+    expect( illegalShipPlacement.ships )
+      .toEqual( [] );
 
   } );
 
@@ -68,21 +70,36 @@ describe( "ship placement", () => {
 
     const illegalShipPlacement = gameboardMethods.placeShip( [0, 1] )( 3 )( "vertical" )( boardWithAShip );
 
-    expect.assertions( 1 );
+    expect.assertions( 2 );
 
     expect( illegalShipPlacement.board[ 2 ][ 1 ] )
       .toEqual( "_" );
+    expect( illegalShipPlacement.ships.length )
+      .toEqual( 1 );
 
   } );
 
   test( "should not place ship next to another ship", () => {
 
-    const illegalShipPlacement = gameboardMethods.placeShip( [2, 1] )( 3 )( "horizontal" )( boardWithAShip );
+    const illegalShipPlacement1  = gameboardMethods.placeShip( [2, 1] )( 3 )( "horizontal" )( boardWithAShip );
+    const illegalShipPlacement2  = gameboardMethods.placeShip( [2, 2] )( 2 )( "vertical" )( boardWithAShip );
+    const illegalShipPlacement3a = gameboardMethods.placeShip( [6, 3] )( 3 )( "horizontal" )( sampleBoard );
+    const illegalShipPlacement3b = gameboardMethods.placeShip( [3, 3] )( 3 )( "vertical" )( illegalShipPlacement3a );
 
-    expect.assertions( 1 );
+    expect.assertions( 6 );
 
-    expect( illegalShipPlacement.board[ 2 ][ 1 ] )
+    expect( illegalShipPlacement1.board[ 2 ][ 1 ] )
       .toEqual( "_" );
+    expect( illegalShipPlacement1.ships.length )
+      .toEqual( 1 );
+    expect( illegalShipPlacement2.board[ 2 ][ 2 ] )
+      .toEqual( "_" );
+    expect( illegalShipPlacement2.ships.length )
+      .toEqual( 1 );
+    expect( illegalShipPlacement3b.board[ 3 ][ 3 ] )
+      .toEqual( "_" );
+    expect( illegalShipPlacement3b.ships.length )
+      .toEqual( 1 );
 
   } );
 

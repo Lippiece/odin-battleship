@@ -31,16 +31,18 @@ const gameboardMethods = {
                            && ifLegalPlacement( position )( length )( direction )( gameboard.board )
                     ? shipMethods.createShip( length )
                     : column ) ) ),
-              ships: [
-                ...gameboard.ships, {
-                  hitCount: 0,
-                  isSunk  : false,
-                  length,
-                  position: {
-                    direction,
-                    position,
-                  },
-                }],
+              ships: ifLegalPlacement( position )( length )( direction )( gameboard.board )
+                ? [
+                  ...gameboard.ships, {
+                    hitCount: 0,
+                    isSunk  : false,
+                    length,
+                    position: {
+                      direction,
+                      position,
+                    },
+                  }]
+                : gameboard.ships,
             } ),
   receiveAttack:
     target =>
@@ -50,6 +52,11 @@ const gameboardMethods = {
           ...registerMiss( target )( gameboard.board ),
         } ),
 };
+/**
+ * "Given a position, a length, and a direction, return
+ * an array of coordinates that represent the full
+ * ship."
+ */
 const getFullShipCoordinates
   = position =>
     length =>
@@ -75,64 +82,71 @@ const ifLegalPlacement
  * false if it doesn't.
  */
 const checkIfPlacementFits
-  = target =>
+  = position =>
     length =>
       direction =>
         ( direction === "horizontal"
-          ? target[ 1 ] + length <= 8
-          : target[ 0 ] + length <= 8 );
+          ? position[ 1 ] + length <= 8
+          : position[ 0 ] + length <= 8 );
 const checkIfPlacementCollides
-  = target =>
+  = position =>
     length =>
       direction =>
         board =>
           ( direction === "horizontal"
-            ? getAdjacentCells( target )( length )( direction )( board )
+            ? getAdjacentCells( position )( length )( board )
+              .horizontal
               .every( cell =>
-                typeof cell !== "object" )
-            : board.slice( target[ 0 ], target[ 0 ] + length )
-              .every( row =>
-                row[ target[ 1 ] ] === "_" ) );
-
+                cell === "_" )
+            : getAdjacentCells( position )( length )( board )
+              .vertical
+              .every( cell =>
+                cell === "_" ) );
 // calculate adjacent cells considering rims of the board
 const getAdjacentCells
-  = target =>
+  = position =>
     length =>
-      direction =>
-        board => {
-
-          if ( direction === "horizontal" ) {
-
-            if ( target[ 0 ] === 0 ) {
-
-              return board[ target[ 0 ] ].slice( target[ 1 ] - 1, target[ 1 ] + length + 1 );
-
-            } if ( target[ 0 ] === 7 ) {
-
-              return board[ target[ 0 ] ].slice( target[ 1 ] - 1, target[ 1 ] + length + 1 );
-
-            }
-            return [...board[ target[ 0 ] ].slice( target[ 1 ] - 1, target[ 1 ] + length + 1 ),
-              ...board[ target[ 0 ] - 1 ].slice( target[ 1 ] - 1, target[ 1 ] + length + 1 ),
-              ...board[ target[ 0 ] + 1 ].slice( target[ 1 ] - 1, target[ 1 ] + length + 1 )];
-
-          }
-
-          // vertical
-          if ( target[ 1 ] === 0 ) {
-
-            return board.slice( target[ 0 ], target[ 0 ] + length );
-
-          } if ( target[ 1 ] === 7 ) {
-
-            return board.slice( target[ 0 ], target[ 0 ] + length );
-
-          }
-          return [...board.slice( target[ 0 ], target[ 0 ] + length ),
-            ...board.slice( target[ 0 ] - 1, target[ 0 ] + length - 1 ),
-            ...board.slice( target[ 0 ] + 1, target[ 0 ] + length + 1 )];
-
-        };
+      board =>
+        ( {
+          horizontal: [
+            ...getFullShipCoordinates( position )( length )( "horizontal" )
+              .map( ( [row, column] ) =>
+                board[ row - 1 ]?.[ column  ] ),
+            board[ position[ 0  ] - 1 ]?.[ position[ 1 ] - 1 ],
+            board[ position[ 0  ] + 1 ]?.[ position[ 1 ] + length  ],
+            ...getFullShipCoordinates( position )( length )( "horizontal" )
+              .map( ( [row, column] ) =>
+                board[ row + 1 ]?.[ column  ] ),
+            board[ position[ 0  ] + 1 ]?.[ position[ 1 ] - 1 ],
+            board[ position[ 0  ] - 1 ]?.[ position[ 1 ] + length  ],
+            ...getFullShipCoordinates( position )( length )( "horizontal" )
+              .map( ( [row, column] ) =>
+                board[ row ][ column ] ),
+            board[ position[ 0 ] ][ position[ 1 ] - 1 ],
+            board[ position[ 0 ] ][ position[ 1 ] + length  ],
+          ]
+            .filter( cell =>
+              cell !== undefined ),
+          vertical: [
+            ...getFullShipCoordinates( position )( length )( "vertical" )
+              .map( ( [row, column] ) =>
+                board[ row ]?.[ column - 1 ] ),
+            board[ position[ 0 ] - 1 ]?.[ position[ 1 ] - 1 ],
+            board[ position[ 0 ] + length  ]?.[ position[ 1 ] - 1 ],
+            ...getFullShipCoordinates( position )( length )( "vertical" )
+              .map( ( [row, column] ) =>
+                board[ row ]?.[ column + 1 ] ),
+            board[ position[ 0 ] - 1 ]?.[ position[ 1 ] + 1 ],
+            board[ position[ 0 ] + length  ]?.[ position[ 1 ] + 1 ],
+            ...getFullShipCoordinates( position )( length )( "vertical" )
+              .map( ( [row, column] ) =>
+                board[ row ]?.[ column ] ),
+            board[ position[ 0 ] - 1 ]?.[ position[ 1 ] ],
+            board[ position[ 0 ] + length  ]?.[ position[ 1 ] ],
+          ]
+            .filter( cell =>
+              cell !== undefined ),
+        } );
 const registerMiss
   = target =>
     board =>
