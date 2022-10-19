@@ -4,5 +4,6 @@
     "gameboard"
   ],
   "todo-tree.tree.scanMode": "open files",
-  "testing.automaticallyOpenPeekView": "never"
+  "testing.automaticallyOpenPeekView": "never",
+  "autoHide.autoHideSideBar": true
 }

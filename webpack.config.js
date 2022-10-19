@@ -17,7 +17,6 @@ export default {
 			<head>
 				<link rel="stylesheet" href="https://use.typekit.net/ysp2yzy.css">
 		    <link rel="stylesheet" href="https://meyerweb.com/eric/tools/css/reset/reset.css">
-				<script src="//code.iconify.design/1/1.0.6/iconify.min.js" defer></script>
 				<meta name="viewport" content="width=device-width, initial-scale=1">
 			</head>
     </html>
@@ -28,6 +27,9 @@ export default {
     filename: "main.js",
     path: path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "dist"),
     clean: true,
+  },
+  experiments: {
+    topLevelAwait: true,
   },
   module: {
     rules: [
@@ -45,7 +47,6 @@ export default {
         use: [
           {
             loader: ImageMinimizerPlugin.loader,
-            // enforce: "pre",
             options: {
               minimizer: {
                 implementation: ImageMinimizerPlugin.imageminGenerate,

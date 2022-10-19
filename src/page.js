@@ -14,6 +14,7 @@ import shipMethods from "./ship";
 const bodyStyle = css`
   color: hsla(0, 0%, 100%, 0.8);
   display: flex;
+  gap: 3em;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -64,6 +65,38 @@ const cellStyle      = css`
       width           : 100%;
       height          : 100%;
     }`;
+const shipsStyle     = css`
+  display         : flex;
+  flex-direction  : row;
+  align-items     : center;
+  justify-content : center;
+  gap             : 1em;
+  background-color: #222;
+`;
+const shipStyle      = css`
+  &[data-ship="2"] {
+    width : 2em;
+    background-color: orange;
+  }
+  &[data-ship="3"] {
+    width : 4em;
+    background-color: red;
+  }
+  &[data-ship="4"] {
+    width : 6em;
+    background-color: blue;
+  }
+  &[data-ship="5"] {
+    width : 8em;
+    background-color: navy;
+  }
+  & {
+    background-color: #555;
+    border          : 1px solid #000;
+    width           : 5vh;
+    height          : 5vh;
+  }`;
+const sampleBoard    = gameboardMethods.createGameboard();
 const placeShipsRandomly
   = gameboard =>
     ( ships = [5, 4, 3, 3, 2] ) => {
@@ -90,16 +123,6 @@ const placeShipsRandomly
       return placeShipsRandomly( newShipBoard )( ships.slice( 1 ) );
 
     };
-const player1Board = gameboardMethods.placeShip( [0, 0] )( 3 )( "horizontal" )( gameboardMethods.createGameboard() );
-console.log( "player1Board", player1Board );
-const player2Board = placeShipsRandomly( gameboardMethods.createGameboard() )();
-const player1      = playerMethods.createPlayer( "Player 1" )( player1Board );
-const player2      = playerMethods.createPlayer( "Player 2" )( player2Board );
-const game         = {
-  player1,
-  player2,
-  turn: 0,
-};
 const handleTurn
   = game_ =>
     attack =>
@@ -188,5 +211,108 @@ const render = game_ => {
     .append( gameElement );
 
 };
+const preventDefault     = event =>
+  event.preventDefault();
+const renderInitialBoard = gameboard => {
 
-render( game );
+  const boardElement = document.createElement( "div" );
+  boardElement.classList.add( gameboardStyle );
+  gameboard.board.reduce( ( accumulator, row, rowIndex ) => {
+
+    row.reduce( ( accumulator_, cell, columnIndex ) => {
+
+      const cellElement = document.createElement( "div" );
+      cellElement.classList.add( cellStyle );
+      cellElement.dataset.row    = rowIndex;
+      cellElement.dataset.column = columnIndex;
+      const content              = {
+        default: () =>
+          cellElement.dataset.cell = cell,
+        ship: () =>
+          ( cell.isSunk
+            ? cellElement.dataset.cell = "sunk"
+            : cellElement.dataset.cell = cell.length ),
+      };
+      ( content.ship || content.default )();
+
+      // place ship when dragged into cell
+      cellElement.addEventListener( "dragenter", preventDefault );
+      cellElement.addEventListener( "dragover", preventDefault );
+      cellElement.addEventListener( "drop", event => {
+
+        event.preventDefault();
+        const data         = JSON.parse( event.dataTransfer.getData( "text" ) );
+        const newGameboard = gameboardMethods.placeShip(
+          [Number( cellElement.dataset.row ),
+            Number( cellElement.dataset.column )]
+        )( data.length )( data.axis )( gameboard );
+        document.querySelector( "body" )
+          .replaceChildren();
+        renderInitialBoard( newGameboard );
+
+      } );
+      accumulator_.append( cellElement );
+      return accumulator_;
+
+    }, accumulator );
+    return accumulator;
+
+  }, boardElement );
+  document.querySelector( "body" )
+    .append( boardElement );
+
+};
+const renderAvailableShips = () => {
+
+  const shipsElement = document.createElement( "div" );
+  const tip          = document.createElement( "div" );
+  tip.textContent    = "Drag and drop the ships to place them on the board.";
+  shipsElement.classList.add( shipsStyle );
+  const ships = [5, 4, 3, 3, 2];
+  ships.reduce( ( accumulator, ship ) => {
+
+    const shipElement        = document.createElement( "div" );
+    shipElement.dataset.ship = ship;
+    shipElement.classList.add( shipStyle );
+    shipElement.draggable = true;
+    accumulator.append( shipElement );
+    shipElement.addEventListener( "dragstart", event => {
+
+      const data = {
+        axis  : "horizontal",
+        length: ship,
+      };
+      event.dataTransfer.setData( "text/plain", JSON.stringify( data ) );
+
+    } );
+    return accumulator;
+
+  }, shipsElement );
+  document.querySelector( "body" )
+    .append( shipsElement );
+  document.querySelector( "body" )
+    .append( tip );
+
+};
+const initializeGame = () => {
+
+  /* render empty board
+   render ship types
+   place ships by dragging */
+  /*  renderInitialBoard();
+     ! const player1Board = getUserInput( sampleBoard ); TODO: get user input */
+  const player2Board = placeShipsRandomly( sampleBoard )();
+  const player1      = playerMethods.createPlayer( "Player 1" )( player1Board );
+  const player2      = playerMethods.createPlayer( "Player 2" )( player2Board );
+  const game         = {
+    player1,
+    player2,
+    turn: 0,
+  };
+  render( game );
+
+};
+renderInitialBoard( sampleBoard );
+renderAvailableShips();
+
+// initializeGame();

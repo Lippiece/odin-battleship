@@ -32,8 +32,7 @@ const gameboardMethods = {
                     ? shipMethods.createShip( length )
                     : column ) ) ),
               ships: ifLegalPlacement( position )( length )( direction )( gameboard.board )
-                ? [
-                  ...gameboard.ships, {
+                ? [...gameboard.ships, {
                     hitCount: 0,
                     isSunk  : false,
                     length,
