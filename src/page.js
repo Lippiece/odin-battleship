@@ -12,13 +12,14 @@ import playerMethods from "./player";
 import shipMethods from "./ship";
 
 const bodyStyle = css`
-  color: hsla(0, 0%, 100%, 0.8);
-  display: flex;
-  gap: 3em;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
+  font-family     : Rubik, 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  color           : hsla(0, 0%, 100%, 0.8);
+  display         : flex;
+  gap             : 1em;
+  flex-direction  : column;
+  align-items     : center;
+  justify-content : center;
+  height          : 100vh;
   background-color: #222;
 `;
 document.querySelector( "body" ).classList.add( bodyStyle );
@@ -72,22 +73,23 @@ const shipsStyle     = css`
   justify-content : center;
   gap             : 1em;
   background-color: #222;
+  margin          : 3em;
 `;
 const shipStyle      = css`
   &[data-ship="2"] {
-    width : 2em;
+    width : 4em;
     background-color: orange;
   }
   &[data-ship="3"] {
-    width : 4em;
+    width : 6em;
     background-color: red;
   }
   &[data-ship="4"] {
-    width : 6em;
+    width : 8em;
     background-color: blue;
   }
   &[data-ship="5"] {
-    width : 8em;
+    width : 10em;
     background-color: navy;
   }
   & {
@@ -95,6 +97,7 @@ const shipStyle      = css`
     border          : 1px solid #000;
     width           : 5vh;
     height          : 5vh;
+    transition      : all 0.1s ease-in-out;
   }`;
 const sampleBoard    = gameboardMethods.createGameboard();
 const placeShipsRandomly
@@ -211,12 +214,9 @@ const render = game_ => {
     .append( gameElement );
 
 };
-const preventDefault     = event =>
+const preventDefault = event =>
   event.preventDefault();
-const renderInitialBoard = gameboard => {
-
-  const boardElement = document.createElement( "div" );
-  boardElement.classList.add( gameboardStyle );
+const renderCells    = ( gameboard, boardElement ) =>
   gameboard.board.reduce( ( accumulator, row, rowIndex ) => {
 
     row.reduce( ( accumulator_, cell, columnIndex ) => {
@@ -246,8 +246,7 @@ const renderInitialBoard = gameboard => {
           [Number( cellElement.dataset.row ),
             Number( cellElement.dataset.column )]
         )( data.length )( data.axis )( gameboard );
-        document.querySelector( "body" )
-          .replaceChildren();
+        boardElement.remove();
         renderInitialBoard( newGameboard );
 
       } );
@@ -258,28 +257,34 @@ const renderInitialBoard = gameboard => {
     return accumulator;
 
   }, boardElement );
-  document.querySelector( "body" )
-    .append( boardElement );
+const rotateShip
+  = axis =>
+    event => {
 
-};
-const renderAvailableShips = () => {
+      event.target.classList.toggle( css`
+        & {
+          transform: rotate(90deg);
+        }` );
 
-  const shipsElement = document.createElement( "div" );
-  const tip          = document.createElement( "div" );
-  tip.textContent    = "Drag and drop the ships to place them on the board.";
-  shipsElement.classList.add( shipsStyle );
-  const ships = [5, 4, 3, 3, 2];
-  ships.reduce( ( accumulator, ship ) => {
+      axis === "vertical"
+        ? event.target.dataset.axis = "horizontal"
+        : event.target.dataset.axis = "vertical";
+
+    };
+const setupShips = shipsElement =>
+  [5, 4, 3, 3, 2].reduce( ( accumulator, ship ) => {
 
     const shipElement        = document.createElement( "div" );
     shipElement.dataset.ship = ship;
+    shipElement.dataset.axis = "horizontal";
     shipElement.classList.add( shipStyle );
     shipElement.draggable = true;
     accumulator.append( shipElement );
+    shipElement.addEventListener( "click", rotateShip( shipElement.dataset.axis ) );
     shipElement.addEventListener( "dragstart", event => {
 
       const data = {
-        axis  : "horizontal",
+        axis  : shipElement.dataset.axis,
         length: ship,
       };
       event.dataTransfer.setData( "text/plain", JSON.stringify( data ) );
@@ -288,10 +293,42 @@ const renderAvailableShips = () => {
     return accumulator;
 
   }, shipsElement );
-  document.querySelector( "body" )
-    .append( shipsElement );
-  document.querySelector( "body" )
-    .append( tip );
+const setupReadyButton     = element => {};
+const renderAvailableShips = () => {
+
+  const shipsElement = document.createElement( "div" );
+  const tip          = document.createElement( "div" );
+  const readyButton  = document.createElement( "button" );
+  readyButton.classList.add( css`
+    & {
+      border: 1px inset lightblue;
+      border-radius: 5px;
+      font-size: 2em;
+      padding: 0.25em 0.5em;
+      outline: none;
+      color: lightblue;
+    }` );
+  readyButton.textContent = "Ready";
+  tip.classList.add( css`
+    & {
+      height         : 3em;
+      margin         : 1rem 0;
+      display        : flex;
+      flex-direction : column;
+      align-items    : center;
+      justify-content: space-between;
+    }` );
+  tip.innerHTML = `
+      <p>Drag and drop ships to cells to place them on the board.</p>
+      <p>Click the ships to rotate them.</p>
+      `;
+  shipsElement.classList.add( shipsStyle );
+  setupShips( shipsElement );
+  setupReadyButton( readyButton );
+  const body = document.querySelector( "body" );
+  body.append( shipsElement );
+  body.append( tip );
+  body.append( readyButton );
 
 };
 const initializeGame = () => {
@@ -312,6 +349,51 @@ const initializeGame = () => {
   render( game );
 
 };
+const displayPopUp
+  = info =>
+    boardElement => {
+
+      const popUp = document.createElement( "div" );
+      popUp.classList.add( css`
+        & {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0,0,0,0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }` );
+      const popUpContent = document.createElement( "div" );
+      popUpContent.classList.add( css`
+        & {
+          background-color: rgba(255,255,255,0.8);
+          padding         : 0.5em;
+          border-radius   : 0.5em;
+          color           : #222;
+        }` );
+      popUpContent.textContent = info;
+      popUp.append( popUpContent );
+      boardElement.append( popUp );
+
+    };
+const renderInitialBoard = gameboard => {
+
+  const boardElement = document.createElement( "div" );
+  boardElement.classList.add( gameboardStyle );
+  renderCells( gameboard, boardElement );
+  document.querySelector( "body" )
+    .prepend( boardElement );
+
+  displayPopUp( `
+    Hi. Would you like to generate ships randomly (any times you like) or place them by hand?` )( boardElement );
+
+  return gameboard;
+
+};
+
 renderInitialBoard( sampleBoard );
 renderAvailableShips();
 
