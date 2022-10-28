@@ -22,7 +22,7 @@ const bodyStyle = css`
   height          : 100vh;
   background-color: #222;
 `;
-document.querySelector( "body" ).classList.add( bodyStyle );
+document.body.classList.add( bodyStyle );
 
 const gameStyle      = css`
   display         : flex;
@@ -43,22 +43,28 @@ const gameboardStyle = css`
   height               : 40vh;
   background-color     : #222;
   transition           : all 1s ease-in-out;
-  `;
-const cellStyle      = css`
-    &[data-cell="2"] {
+
+  &#player1-board {
+    div[data-cell="2"] {
       background-color: orange;
     }
-    &[data-cell="3"] {
+    div[data-cell="3"] {
       background-color: red;
     }
-    &[data-cell="4"] {
+    div[data-cell="4"] {
       background-color: blue;
     }
-    &[data-cell="5"] {
+    div[data-cell="5"] {
       background-color: navy;
     }
+  }
+  `;
+const cellStyle      = css`
     &[data-cell="X"] {
       background-color: #aaa;
+    }
+    &[data-cell="H"] {
+      background-color: #a44;
     }
     & {
       background-color: #555;
@@ -126,23 +132,30 @@ const placeShipsRandomly
       return placeShipsRandomly( newShipBoard )( ships.slice( 1 ) );
 
     };
+const attackRandomly = gameboard => {
+
+  const randomRow    = Math.floor( Math.random() * 8 );
+  const randomColumn = Math.floor( Math.random() * 8 );
+  return gameboardMethods.receiveAttack( [randomRow, randomColumn] )( gameboard );
+
+};
 const handleTurn
   = game_ =>
     attack =>
       ( game_.turn % 2 === 0
         ? {
           ...game_,
-          player1: {
-            ...game_.player1,
-            gameboard: gameboardMethods.receiveAttack( attack )( game_.player1.gameboard ),
-          },
-          turn: game_.turn + 1,
-        }
-        : {
-          ...game_,
           player2: {
             ...game_.player2,
             gameboard: gameboardMethods.receiveAttack( attack )( game_.player2.gameboard ),
+          },
+          turn: game_.turn + 1,
+        }
+        :  {
+          ...game_,
+          player1: {
+            ...game_.player1,
+            gameboard: attackRandomly( game_.player1.gameboard ),
           },
           turn: game_.turn + 1,
         } );
@@ -162,19 +175,22 @@ const renderPlayer
                 default: () =>
                   cellElement.dataset.cell = column,
                 ship: () =>
-                  ( column.isSunk
-                    ? cellElement.dataset.cell = "sunk"
-                    : cellElement.dataset.cell = column.length ),
+                  cellElement.dataset.cell = column.length,
               };
-              ( cell.ship || cell.default )();
-              cellElement.addEventListener( "click", () => {
+              cell[ ( typeof column !== "object" ) ? "default" : "ship" ]();
 
-                document.querySelector( "body" )
-                  .replaceChildren();
-                render( handleTurn( game_ )( [rowIndex, columnIndex] ) );
-                console.log( column );
+              // if board is not player 1's board, add event listener
+              if ( playerBoardElement.id !== "player1-board" ) {
 
-              } );
+                cellElement.addEventListener( "click", () => {
+
+                  document.body
+                    .replaceChildren();
+                  render( handleTurn( game_ )( [rowIndex, columnIndex] ) );
+
+                } );
+
+              }
               return cellElement;
 
             } )() ) ) );
@@ -198,6 +214,7 @@ const render = game_ => {
 
   const player1BoardElement = document.createElement( "div" );
   player1BoardElement.classList.add( gameboardStyle );
+  player1BoardElement.id = "player1-board";
   gameElement.append( player1BoardElement );
 
   renderPlayer( game_.player1 )( player1BoardElement )( game_ );
@@ -207,31 +224,25 @@ const render = game_ => {
   player2BoardElement.classList.add( gameboardStyle );
   gameElement.append( player2BoardElement );
 
-  placeShipsRandomly( game_.player2.gameboard );
-
   renderPlayer( game_.player2 )( player2BoardElement )( game_ );
-  document.querySelector( "body" )
+  document.body
     .append( gameElement );
 
 };
 const preventDefault = event =>
   event.preventDefault();
 const renderCells    = ( gameboard, boardElement ) =>
-  gameboard.board.reduce( ( accumulator, row, rowIndex ) => {
+  gameboard.board.reduce( ( accumulator, row, _ ) => {
 
-    row.reduce( ( accumulator_, cell, columnIndex ) => {
+    row.reduce( ( accumulator_, cell, _ ) => {
 
       const cellElement = document.createElement( "div" );
       cellElement.classList.add( cellStyle );
-      cellElement.dataset.row    = rowIndex;
-      cellElement.dataset.column = columnIndex;
-      const content              = {
+      const content = {
         default: () =>
           cellElement.dataset.cell = cell,
         ship: () =>
-          ( cell.isSunk
-            ? cellElement.dataset.cell = "sunk"
-            : cellElement.dataset.cell = cell.length ),
+          cellElement.dataset.cell = cell.length,
       };
       ( content.ship || content.default )();
 
@@ -246,7 +257,7 @@ const renderCells    = ( gameboard, boardElement ) =>
           [Number( cellElement.dataset.row ),
             Number( cellElement.dataset.column )]
         )( data.length )( data.axis )( gameboard );
-        boardElement.remove();
+        document.body.replaceChildren();
         renderInitialBoard( newGameboard );
 
       } );
@@ -293,23 +304,7 @@ const setupShips = shipsElement =>
     return accumulator;
 
   }, shipsElement );
-const setupReadyButton     = element => {};
-const renderAvailableShips = () => {
-
-  const shipsElement = document.createElement( "div" );
-  const tip          = document.createElement( "div" );
-  const readyButton  = document.createElement( "button" );
-  readyButton.classList.add( css`
-    & {
-      border: 1px inset lightblue;
-      border-radius: 5px;
-      font-size: 2em;
-      padding: 0.25em 0.5em;
-      outline: none;
-      color: lightblue;
-    }` );
-  readyButton.textContent = "Ready";
-  tip.classList.add( css`
+const tipStyle             = css`
     & {
       height         : 3em;
       margin         : 1rem 0;
@@ -317,27 +312,54 @@ const renderAvailableShips = () => {
       flex-direction : column;
       align-items    : center;
       justify-content: space-between;
-    }` );
+    }`;
+const readyButtonStyle     = css`
+    & {
+      border: 1px inset lightblue;
+      border-radius: 5px;
+      font-size: 2em;
+      padding: 0.25em 0.5em;
+      outline: none;
+      color: lightblue;
+    }`;
+const instrumentsStyle     = css`
+    & {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }`;
+const renderAvailableShips = gameboard => {
+
+  const shipsElement = document.createElement( "div" );
+  shipsElement.id    = "ships";
+  const tip          = document.createElement( "div" );
+  tip.id             = "tip";
+  const readyButton  = document.createElement( "button" );
+  readyButton.classList.add( readyButtonStyle );
+  readyButton.textContent = "Ready";
+  readyButton.id          = "ready";
+  tip.classList.add( tipStyle );
   tip.innerHTML = `
       <p>Drag and drop ships to cells to place them on the board.</p>
       <p>Click the ships to rotate them.</p>
+      <p>Press Esc at any time to place ships randomly.</p>
       `;
   shipsElement.classList.add( shipsStyle );
   setupShips( shipsElement );
-  setupReadyButton( readyButton );
-  const body = document.querySelector( "body" );
-  body.append( shipsElement );
-  body.append( tip );
-  body.append( readyButton );
+  const instruments = document.createElement( "div" );
+  instruments.classList.add( instrumentsStyle );
+  instruments.append( shipsElement );
+  instruments.append( tip );
+  instruments.append( readyButton );
+  document.body
+    .append( instruments );
+  readyButton.addEventListener( "click", () => { initializeGame( gameboard ) } );
 
 };
-const initializeGame = () => {
+const initializeGame = player1Board => {
 
-  /* render empty board
-   render ship types
-   place ships by dragging */
-  /*  renderInitialBoard();
-     ! const player1Board = getUserInput( sampleBoard ); TODO: get user input */
+  document.body.replaceChildren();
   const player2Board = placeShipsRandomly( sampleBoard )();
   const player1      = playerMethods.createPlayer( "Player 1" )( player1Board );
   const player2      = playerMethods.createPlayer( "Player 2" )( player2Board );
@@ -346,55 +368,33 @@ const initializeGame = () => {
     player2,
     turn: 0,
   };
-  render( game );
+  return render( game );
 
 };
-const displayPopUp
-  = info =>
-    boardElement => {
+const randomizeOnEsc     = event => {
 
-      const popUp = document.createElement( "div" );
-      popUp.classList.add( css`
-        & {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-color: rgba(0,0,0,0.6);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }` );
-      const popUpContent = document.createElement( "div" );
-      popUpContent.classList.add( css`
-        & {
-          background-color: rgba(255,255,255,0.8);
-          padding         : 0.5em;
-          border-radius   : 0.5em;
-          color           : #222;
-        }` );
-      popUpContent.textContent = info;
-      popUp.append( popUpContent );
-      boardElement.append( popUp );
+  if ( event.key === "Escape" ) {
 
-    };
+    document.body.replaceChildren();
+    renderInitialBoard(
+      placeShipsRandomly( sampleBoard )()
+    );
+
+  }
+
+};
 const renderInitialBoard = gameboard => {
 
   const boardElement = document.createElement( "div" );
   boardElement.classList.add( gameboardStyle );
+  boardElement.id = "player1-board";
   renderCells( gameboard, boardElement );
-  document.querySelector( "body" )
+  document.body
     .prepend( boardElement );
+  document.addEventListener( "keydown", randomizeOnEsc );
 
-  displayPopUp( `
-    Hi. Would you like to generate ships randomly (any times you like) or place them by hand?` )( boardElement );
-
+  renderAvailableShips( gameboard );
   return gameboard;
 
 };
-
 renderInitialBoard( sampleBoard );
-renderAvailableShips();
-
-// initializeGame();
