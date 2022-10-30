@@ -108,7 +108,7 @@ const shipStyle      = css`
 const sampleBoard    = gameboardMethods.createGameboard();
 const placeShipsRandomly
   = gameboard =>
-    ( ships = [5, 4, 3, 3, 2] ) => {
+    ( ships = [ 5, 4, 3, 3, 2 ] ) => {
 
       const presentShips = gameboard.ships.length;
       const randomRow    = Math.floor( Math.random() * 8 );
@@ -118,7 +118,7 @@ const placeShipsRandomly
         1: "vertical",
       };
       const randomAxis   = axis[ Math.floor( Math.random() * 2 ) ];
-      const newShipBoard = gameboardMethods.placeShip( [randomRow, randomColumn] )( ships[ 0 ] )( randomAxis )( gameboard );
+      const newShipBoard = gameboardMethods.placeShip( [ randomRow, randomColumn ] )( ships[ 0 ] )( randomAxis )( gameboard );
       if ( newShipBoard.ships.length === presentShips ) {
 
         return placeShipsRandomly( gameboard )( ships );
@@ -136,7 +136,7 @@ const attackRandomly = gameboard => {
 
   const randomRow    = Math.floor( Math.random() * 8 );
   const randomColumn = Math.floor( Math.random() * 8 );
-  return gameboardMethods.receiveAttack( [randomRow, randomColumn] )( gameboard );
+  return gameboardMethods.receiveAttack( [ randomRow, randomColumn ] )( gameboard );
 
 };
 const handleTurn
@@ -186,7 +186,7 @@ const renderPlayer
 
                   document.body
                     .replaceChildren();
-                  render( handleTurn( game_ )( [rowIndex, columnIndex] ) );
+                  render( handleTurn( game_ )( [ rowIndex, columnIndex ] ) );
 
                 } );
 
@@ -232,13 +232,15 @@ const render = game_ => {
 const preventDefault = event =>
   event.preventDefault();
 const renderCells    = ( gameboard, boardElement ) =>
-  gameboard.board.reduce( ( accumulator, row, _ ) => {
+  gameboard.board.reduce( ( accumulator, row, rowIndex ) => {
 
-    row.reduce( ( accumulator_, cell, _ ) => {
+    row.reduce( ( accumulator_, cell, columnIndex ) => {
 
       const cellElement = document.createElement( "div" );
       cellElement.classList.add( cellStyle );
-      const content = {
+      cellElement.dataset.row    = rowIndex;
+      cellElement.dataset.column = columnIndex;
+      const content              = {
         default: () =>
           cellElement.dataset.cell = cell,
         ship: () =>
@@ -254,8 +256,8 @@ const renderCells    = ( gameboard, boardElement ) =>
         event.preventDefault();
         const data         = JSON.parse( event.dataTransfer.getData( "text" ) );
         const newGameboard = gameboardMethods.placeShip(
-          [Number( cellElement.dataset.row ),
-            Number( cellElement.dataset.column )]
+          [ Number( cellElement.dataset.row ),
+            Number( cellElement.dataset.column ) ]
         )( data.length )( data.axis )( gameboard );
         document.body.replaceChildren();
         renderInitialBoard( newGameboard );
@@ -283,7 +285,7 @@ const rotateShip
 
     };
 const setupShips = shipsElement =>
-  [5, 4, 3, 3, 2].reduce( ( accumulator, ship ) => {
+  [ 5, 4, 3, 3, 2 ].reduce( ( accumulator, ship ) => {
 
     const shipElement        = document.createElement( "div" );
     shipElement.dataset.ship = ship;
