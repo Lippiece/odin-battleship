@@ -1,7 +1,9 @@
+import * as R from "ramda";
+
 import gameboardMethods from "./gameboard";
 import shipMethods from "./ship";
 
-const playerMethods = {
+export const playerMethods = {
   attack:
     attacker =>
       receiver =>
@@ -21,54 +23,72 @@ const playerMethods = {
           name,
         } ),
 };
-const aiMethods     = {
-  chooseCoordinatesNearHit:
+const getHitCell = board =>
+  board.reduce( ( accumulator, row, rowIndex ) => {
+
+    const hit_ = row.reduce( ( accumulator_, cell, cellIndex ) => {
+
+      if ( cell === "H" ) {
+
+        return [ rowIndex, cellIndex ];
+
+      }
+      return accumulator_;
+
+    }, false );
+
+    return hit_ || accumulator;
+
+  }, [] );
+const getUnhitCells = board =>
+  board.reduce( ( accumulator, row, rowIndex ) => {
+
+    const unhit = row.reduce( ( accumulator_, cell, cellIndex ) => {
+
+      if ( cell !== "X" ) {
+
+        return [ ...accumulator_, [ rowIndex, cellIndex ] ];
+
+      }
+      return accumulator_;
+
+    }, [] );
+
+    return [ ...accumulator, ...unhit ];
+
+  }, [] )
+    .filter( ( [ row, column ] ) =>
+      board[ row ]?.[ column ] !== "H" )
+    .filter( Boolean );
+export const aiMethods = {
+  getCellNearNearHit:
     board =>
       hit => {
 
-        const validMoves = [
-          [hit[ 0 ] - 1, hit[ 1 ]],
-          [hit[ 0 ] + 1, hit[ 1 ]],
-          [hit[ 0 ], hit[ 1 ] - 1],
-          [hit[ 0 ], hit[ 1 ] + 1],
-        ].filter( move =>
-          move[ 0 ] >= 0 && move[ 0 ] < 8 && move[ 1 ] >= 0 && move[ 1 ] < 8 );
-
-        return validMoves.length > 0 ? validMoves[ 0 ] : aiMethods.chooseRandomCoordinates( board );
+        const unhit     = getUnhitCells( board );
+        const validMove = [
+          [ hit[ 0 ] - 1, hit[ 1 ] ],
+          [ hit[ 0 ] + 1, hit[ 1 ] ],
+          [ hit[ 0 ], hit[ 1 ] - 1 ],
+          [ hit[ 0 ], hit[ 1 ] + 1 ],
+        ]
+          .find( availableCell =>
+            unhit.find( unhitCell =>
+              R.equals( availableCell, unhitCell ) ) );
+        const random    = unhit[ Math.floor( Math.random() * unhit.length ) ];
+        return validMove || random;
 
       },
-  chooseRandomCoordinates:
+  getRandomCell:
     board =>
-      ( [Math.floor( Math.random() * board.length ),
-        Math.floor( Math.random() * board.length )] ),
-  selectCellToAttack:
+      ( [ Math.floor( Math.random() * board.length ),
+        Math.floor( Math.random() * board.length ) ] ),
+  selectTarget:
     board => {
 
-      const hit = ( board.reduce( ( accumulator, row, rowIndex ) => {
+      const hit = getHitCell( board );
 
-        const hit_ = row.reduce( ( accumulator_, cell, cellIndex ) => {
-
-          if ( cell === "X" ) {
-
-            return [rowIndex, cellIndex];
-
-          }
-          return accumulator_;
-
-        }, false );
-
-        return hit_ || accumulator;
-
-      }, [] ) );
-
-      return hit.length > 0
-        ? aiMethods.chooseCoordinatesNearHit( board )( hit )
-        : aiMethods.chooseRandomCoordinates( board );
+      return aiMethods.getCellNearNearHit( board )( hit );
 
     },
-};
-
-export default {
-  ...playerMethods,
-  aiMethods,
 };

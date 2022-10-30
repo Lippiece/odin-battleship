@@ -8,7 +8,7 @@
 import { css } from "@emotion/css";
 
 import gameboardMethods from "./gameboard";
-import playerMethods from "./player";
+import { aiMethods, playerMethods } from "./player";
 import shipMethods from "./ship";
 
 const bodyStyle = css`
@@ -132,33 +132,21 @@ const placeShipsRandomly
       return placeShipsRandomly( newShipBoard )( ships.slice( 1 ) );
 
     };
-const attackRandomly = gameboard => {
-
-  const randomRow    = Math.floor( Math.random() * 8 );
-  const randomColumn = Math.floor( Math.random() * 8 );
-  return gameboardMethods.receiveAttack( [ randomRow, randomColumn ] )( gameboard );
-
-};
 const handleTurn
   = game_ =>
     attack =>
-      ( game_.turn % 2 === 0
-        ? {
-          ...game_,
-          player2: {
-            ...game_.player2,
-            gameboard: gameboardMethods.receiveAttack( attack )( game_.player2.gameboard ),
-          },
-          turn: game_.turn + 1,
-        }
-        :  {
-          ...game_,
-          player1: {
-            ...game_.player1,
-            gameboard: attackRandomly( game_.player1.gameboard ),
-          },
-          turn: game_.turn + 1,
-        } );
+      ( {
+        ...game_,
+        player1: {
+          ...game_.player1,
+          gameboard: gameboardMethods.receiveAttack( aiMethods.selectTarget( game_.player1.gameboard.board ) )( game_.player1.gameboard ),
+        },
+        player2: {
+          ...game_.player2,
+          gameboard: gameboardMethods.receiveAttack( attack )( game_.player2.gameboard ),
+        },
+        turn: game_.turn + 2,
+      } );
 const renderPlayer
   = player =>
     playerBoardElement =>

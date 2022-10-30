@@ -17,6 +17,7 @@
   "dependencies": {
     "@adipiscing/image-slider": "^1.2.6",
     "@emotion/css": "^11.10.0",
+    "ramda": "^0.28.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
